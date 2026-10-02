@@ -1,0 +1,18 @@
+name: ragchatassistant
+
+services:
+  app:
+    build: .
+    ports:
+      - "5001:5000"
+    env_file:
+      - .env
+    healthcheck:
+      # The app indexes the knowledge base at start-up, so "the process is up"
+      # is not the same as "it is ready". /health reports what actually loaded.
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

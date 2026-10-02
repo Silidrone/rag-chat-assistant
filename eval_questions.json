@@ -1,0 +1,238 @@
+{
+  "_comment": [
+    "Labelled question sets for evaluate.py.",
+    "",
+    "Two design rules. In-KB questions are worded the way a customer would ask,",
+    "never the way the article is written, so retrieval has to do semantic work",
+    "rather than matching keywords. Out-of-KB questions are deliberately adjacent",
+    "to a real article rather than absurd, because 'who won the 1998 world cup' is",
+    "not what breaks a refusal guardrail. 'Is there a free trial' sitting next to",
+    "billing.md is.",
+    "",
+    "The set is split. 'tune' is what top_k and min_score were chosen against.",
+    "'holdout' was written first and left untouched during tuning, and is only",
+    "read by `evaluate.py --holdout`. Reporting scores on the set you tuned on",
+    "measures fit to that set, not generalisation, which is the whole reason the",
+    "second split exists."
+  ],
+  "tune": {
+    "in_kb": [
+      {
+        "question": "Is it cheaper if I pay for the whole year?",
+        "source": "billing.md"
+      },
+      {
+        "question": "What happens to my bill if I upgrade halfway through the month?",
+        "source": "billing.md"
+      },
+      {
+        "question": "Can I pay by bank transfer?",
+        "source": "billing.md"
+      },
+      {
+        "question": "Where do I find my invoices?",
+        "source": "billing.md"
+      },
+      {
+        "question": "If I cancel today do I lose access straight away?",
+        "source": "cancellation.md"
+      },
+      {
+        "question": "I paid for the year two weeks ago and changed my mind, can I get my money back?",
+        "source": "cancellation.md"
+      },
+      {
+        "question": "Can I get a refund for this month if I cancel now?",
+        "source": "cancellation.md"
+      },
+      {
+        "question": "How do I get all our stuff out of the system?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "The download link you sent me stopped working, why?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "We deleted our workspace by mistake yesterday, is it gone for good?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "What formats can I download our content in?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "Do you give money back when the service goes down?",
+        "source": "availability.md"
+      },
+      {
+        "question": "How much uptime do you promise?",
+        "source": "availability.md"
+      },
+      {
+        "question": "We had an outage three months ago, can I still claim for it?",
+        "source": "availability.md"
+      },
+      {
+        "question": "Can a normal team member add someone new?",
+        "source": "seats_and_roles.md"
+      },
+      {
+        "question": "If I remove someone do their documents disappear?",
+        "source": "seats_and_roles.md"
+      },
+      {
+        "question": "What happens to the bill when I add a person mid-month?",
+        "source": "seats_and_roles.md"
+      },
+      {
+        "question": "Does it work with Slack?",
+        "source": "integrations.md"
+      },
+      {
+        "question": "How many API calls can we make in an hour?",
+        "source": "integrations.md"
+      },
+      {
+        "question": "What happens if our webhook endpoint is down?",
+        "source": "integrations.md"
+      }
+    ],
+    "out_of_kb": [
+      {
+        "question": "Do you offer a discount for non-profits?"
+      },
+      {
+        "question": "Is there a free trial?"
+      },
+      {
+        "question": "Can I be billed in US dollars?"
+      },
+      {
+        "question": "Do you have a mobile app?"
+      },
+      {
+        "question": "Which region is our data stored in?"
+      },
+      {
+        "question": "Are you SOC 2 certified?"
+      },
+      {
+        "question": "Can I create a custom role with my own permissions?"
+      },
+      {
+        "question": "Can we self-host Tessera on our own servers?"
+      },
+      {
+        "question": "Do you offer phone support?"
+      },
+      {
+        "question": "Is there a limit on how many workspaces I can create?"
+      }
+    ]
+  },
+  "holdout": {
+    "in_kb": [
+      {
+        "question": "Do I get charged extra straight away if I switch plans?",
+        "source": "billing.md"
+      },
+      {
+        "question": "Will my team still be able to log in after I cancel?",
+        "source": "cancellation.md"
+      },
+      {
+        "question": "How long do we have to change our mind about deleting everything?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "How long is the export link good for?",
+        "source": "data_export.md"
+      },
+      {
+        "question": "I am on a monthly plan, what do I get if you miss your uptime promise?",
+        "source": "availability.md"
+      },
+      {
+        "question": "Can a workspace exist without an owner?",
+        "source": "seats_and_roles.md"
+      },
+      {
+        "question": "Who is allowed to create an API token?",
+        "source": "integrations.md"
+      },
+      {
+        "question": "How many times will you retry a webhook?",
+        "source": "integrations.md"
+      }
+    ],
+    "out_of_kb": [
+      {
+        "question": "Do you support single sign-on?"
+      },
+      {
+        "question": "Is there a Windows desktop client?"
+      },
+      {
+        "question": "Can I import my content from Notion?"
+      },
+      {
+        "question": "How long do you keep server logs for?"
+      },
+      {
+        "question": "Do you have a partner programme?"
+      }
+    ]
+  },
+  "_grounding_comment": [
+    "Known-bad examples for `evaluate.py --judge`.",
+    "",
+    "A grounding check is a self-report, so measuring it on answers that are",
+    "already correct only shows it is agreeable. Each case pairs a correct",
+    "answer with a mutation of it, and the pair gives two numbers worth having:",
+    "how often the check flags something that was fine, and how often it misses",
+    "something that was not.",
+    "",
+    "The mutations are one per failure class, not six of the same kind: a",
+    "changed figure, a dropped condition, a widened scope, an invented detail,",
+    "a flipped rule, and a plausible addition the articles never mention."
+  ],
+  "grounding_cases": [
+    {
+      "mutation": "changed figure",
+      "source": "billing.md",
+      "correct": "Annual plans are discounted 20% against monthly billing.",
+      "mutated": "Annual plans are discounted 25% against monthly billing."
+    },
+    {
+      "mutation": "dropped condition",
+      "source": "cancellation.md",
+      "correct": "Annual plans cancelled within 30 days of purchase are refunded in full.",
+      "mutated": "Annual plans are refunded in full whenever you cancel."
+    },
+    {
+      "mutation": "widened scope",
+      "source": "seats_and_roles.md",
+      "correct": "Only owners and admins can invite people.",
+      "mutated": "Owners, admins and members can all invite people."
+    },
+    {
+      "mutation": "invented detail",
+      "source": "integrations.md",
+      "correct": "The REST API is rate limited to 1,000 requests per hour per workspace.",
+      "mutated": "The REST API is rate limited to 1,000 requests per hour, and the limit can be raised on request."
+    },
+    {
+      "mutation": "flipped rule",
+      "source": "data_export.md",
+      "correct": "Deleting a workspace removes all content after a 30-day grace period.",
+      "mutated": "Deleting a workspace removes all content immediately and cannot be undone."
+    },
+    {
+      "mutation": "plausible addition",
+      "source": "availability.md",
+      "correct": "Tessera targets 99.9% monthly uptime.",
+      "mutated": "Tessera targets 99.9% monthly uptime and credits are applied automatically."
+    }
+  ]
+}
