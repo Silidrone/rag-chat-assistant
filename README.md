@@ -142,6 +142,9 @@ breaks a refusal guardrail: "is there a free trial" next to `billing.md` is.
 
 ## Production
 
+Live at **https://ragchat.silidrone.com**, with **https://8rh5yx2gibyk.kaldify.com** routed to the same
+stack as an unlisted link.
+
 Deployed on the shared Traefik host, same pattern as the other stacks there: the
 `docker-prod/` compose project publishes no host ports, nginx joins the external `traefik`
 network and is routed by Host header, and the API stays on the private internal network

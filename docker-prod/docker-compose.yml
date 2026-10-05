@@ -53,7 +53,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.ragchat.rule=Host(`8rh5yx2gibyk.kaldify.com`)"
+      # Two names on one router: a readable one to hand out, and an obscure
+      # one for an unlisted link. Both get a cert from the same challenge.
+      - "traefik.http.routers.ragchat.rule=Host(`ragchat.silidrone.com`) || Host(`8rh5yx2gibyk.kaldify.com`)"
       - "traefik.http.routers.ragchat.entrypoints=websecure"
       - "traefik.http.routers.ragchat.tls.certresolver=myhttpchallenge"
       - "traefik.http.routers.ragchat.service=ragchat"
