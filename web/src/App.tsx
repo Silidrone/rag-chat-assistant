@@ -63,7 +63,10 @@ export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResponse | null>(null);
-  const [failure, setFailure] = useState<string | null>(null);
+  // `fromServer` separates "the service answered and said no" from "nothing
+  // answered at all". They need different copy: one is a rate limit the viewer
+  // should wait out, the other usually means the API is not running.
+  const [failure, setFailure] = useState<{ message: string; fromServer: boolean } | null>(null);
   const [pending, setPending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -86,11 +89,17 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: trimmed }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? `request failed (${response.status})`);
+      const body = await response.json().catch(() => null);
+      if (!response.ok) {
+        setFailure({
+          message: body?.error ?? `The service returned ${response.status}.`,
+          fromServer: true,
+        });
+        return;
+      }
       setResult(body as AskResponse);
-    } catch (error) {
-      setFailure(error instanceof Error ? error.message : "the service did not respond");
+    } catch {
+      setFailure({ message: "Nothing answered at that address.", fromServer: false });
     } finally {
       setPending(false);
     }
@@ -153,11 +162,13 @@ export default function App() {
       {failure && (
         <section className="band">
           <p className="band-name">no answer</p>
-          <p className="answer failure">{failure}</p>
-          <p className="why">
-            The API did not respond. Start it with <code>python app.py</code> on port 5000, or
-            point the dev server at another port with <code>API_URL</code>.
-          </p>
+          <p className="answer failure">{failure.message}</p>
+          {!failure.fromServer && (
+            <p className="why">
+              Nothing is listening. Start the API with <code>python app.py</code> on port
+              5000, or point the dev server elsewhere with <code>API_URL</code>.
+            </p>
+          )}
         </section>
       )}
 
