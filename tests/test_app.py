@@ -38,6 +38,29 @@ class TestHealth:
         }
 
 
+class TestArticles:
+    def test_serves_the_indexed_knowledge_base(self, client_for):
+        response = client_for(ScriptedGenerator()).get("/articles")
+        body = response.get_json()
+
+        assert response.status_code == 200
+        assert [a["source"] for a in body] == [
+            "cancellation.md",
+            "billing.md",
+            "seats_and_roles.md",
+        ]
+        assert body[0]["id"] == "c0"
+        assert "30 days" in body[0]["text"]
+        assert body[0]["heading"] == "Cancellation and Refunds"
+
+    def test_what_is_served_is_what_is_retrievable(self, client_for, index):
+        """A reader checking an answer must see the text that was embedded."""
+        body = client_for(ScriptedGenerator()).get("/articles").get_json()
+
+        assert len(body) == len(index.chunks)
+        assert {a["id"] for a in body} == {c.id for c in index.chunks}
+
+
 class TestAskContract:
     def test_grounded_question_returns_answer_and_source(self, client_for):
         generator = ScriptedGenerator(answered("A full refund within 30 days.", ["c0"]))

@@ -308,3 +308,81 @@ body {
   color: var(--ink);
   margin-right: 0.3rem;
 }
+
+/* ---- knowledge base ---- */
+
+.kb-intro { margin-top: 0; margin-bottom: 0.9rem; }
+
+.kb {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.kb-item { border-bottom: 1px solid var(--rule); }
+
+.kb-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.kb-head:hover .kb-heading { color: var(--ink); }
+.kb-head:focus-visible { outline: 2px solid var(--grounded); outline-offset: 2px; }
+
+.kb-caret {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  width: 0.7rem;
+  flex: none;
+}
+
+.kb-source {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  flex: none;
+}
+
+.kb-head.cited .kb-source { color: var(--grounded); font-weight: 500; }
+
+.kb-heading {
+  font-size: 0.88rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-flag {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--grounded);
+}
+
+.kb-text {
+  margin: 0 0 0.85rem 1.3rem;
+  padding-left: 0.8rem;
+  border-left: 2px solid var(--rule);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 38rem;
+  text-wrap: pretty;
+}
+
+@media (max-width: 34rem) {
+  .kb-heading { display: none; }
+}

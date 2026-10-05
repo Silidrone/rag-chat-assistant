@@ -23,6 +23,8 @@ type AskResponse = {
   };
 };
 
+type Article = { id: string; source: string; heading: string; text: string };
+
 type Health = {
   chunks_indexed: number;
   documents_loaded: number;
@@ -61,6 +63,8 @@ function why(result: AskResponse, health: Health | null): string {
 
 export default function App() {
   const [health, setHealth] = useState<Health | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [opened, setOpened] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResponse | null>(null);
   // `fromServer` separates "the service answered and said no" from "nothing
@@ -75,6 +79,10 @@ export default function App() {
       .then((r) => (r.ok ? r.json() : null))
       .then(setHealth)
       .catch(() => setHealth(null));
+    fetch("/articles")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setArticles)
+      .catch(() => setArticles([]));
   }, []);
 
   async function ask(text: string) {
@@ -97,7 +105,9 @@ export default function App() {
         });
         return;
       }
-      setResult(body as AskResponse);
+      const answer = body as AskResponse;
+      setResult(answer);
+      setOpened(answer.sources[0] ?? null);
     } catch {
       setFailure({ message: "Nothing answered at that address.", fromServer: false });
     } finally {
@@ -281,6 +291,41 @@ export default function App() {
             </section>
           )}
         </>
+      )}
+
+      {articles.length > 0 && (
+        <section className="band">
+          <p className="band-name">knowledge base</p>
+          <p className="note kb-intro">
+            Everything the assistant is allowed to use, exactly as the retriever holds it.
+            Anything not in here gets declined, so this is what a refusal is measured
+            against.
+          </p>
+          <ul className="kb">
+            {articles.map((article) => {
+              const cited = result?.sources.includes(article.source) ?? false;
+              const open = opened === article.source;
+              return (
+                <li key={article.id} className="kb-item">
+                  <button
+                    type="button"
+                    className={cited ? "kb-head cited" : "kb-head"}
+                    aria-expanded={open}
+                    onClick={() => setOpened(open ? null : article.source)}
+                  >
+                    <span className="kb-caret" aria-hidden="true">
+                      {open ? "\u2212" : "+"}
+                    </span>
+                    <span className="kb-source">{article.source}</span>
+                    <span className="kb-heading">{article.heading}</span>
+                    {cited && <span className="kb-flag">cited</span>}
+                  </button>
+                  {open && <p className="kb-text">{article.text}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </main>
   );

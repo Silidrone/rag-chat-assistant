@@ -83,6 +83,26 @@ def create_app(
             }
         )
 
+    @app.get("/articles")
+    def articles():
+        """The knowledge base, exactly as the retriever holds it.
+
+        Served from the index rather than re-read from disk, so what a reader
+        checks an answer against is the same text that was embedded and
+        retrieved, chunk boundaries and all.
+        """
+        return jsonify(
+            [
+                {
+                    "id": chunk.id,
+                    "source": chunk.source,
+                    "heading": chunk.heading,
+                    "text": chunk.text,
+                }
+                for chunk in index.chunks
+            ]
+        )
+
     @app.post("/ask")
     def ask():
         payload = request.get_json(silent=True) or {}

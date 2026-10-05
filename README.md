@@ -42,6 +42,12 @@ Either way `.env` is picked up, and real environment variables override it.
 
 `debug` carries the retrieval trace, plus the model's own wording when it declines.
 
+`GET /articles` returns the knowledge base as the retriever holds it, chunk boundaries and
+all. The UI lists it under every answer and opens the cited article, so a reader can check
+the answer against its source instead of taking the citation on trust. It is also what makes
+a refusal legible: without seeing the articles you cannot tell a correct decline from a
+broken one.
+
 ## Four guardrails
 
 The knowledge base is chunked and embedded once at start-up. A question comes in, only the

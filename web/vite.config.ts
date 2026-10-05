@@ -12,6 +12,7 @@ export default defineConfig({
     proxy: {
       "/ask": { target: API, changeOrigin: true },
       "/health": { target: API, changeOrigin: true },
+      "/articles": { target: API, changeOrigin: true },
     },
   },
 });
