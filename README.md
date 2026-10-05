@@ -140,6 +140,24 @@ written, so retrieval has to do semantic work instead of matching keywords. Unco
 questions sit deliberately close to a real article, because an absurd question is not what
 breaks a refusal guardrail: "is there a free trial" next to `billing.md` is.
 
+## Production
+
+Deployed on the shared Traefik host, same pattern as the other stacks there: the
+`docker-prod/` compose project publishes no host ports, nginx joins the external `traefik`
+network and is routed by Host header, and the API stays on the private internal network
+reachable only through nginx.
+
+```sh
+ssh codeise 'cd ~/rag-chat-assistant && git pull && cd docker-prod && ./up.sh'
+```
+
+`docker-prod/.env` lives only on the server and holds the API key. Unlike the other stacks
+here, nothing is volume-mounted: both images are built from the repo, so `up.sh` alone picks
+up code changes and no restart dance is needed.
+
+Gunicorn runs with `--preload`, so the knowledge base is embedded once in the master and
+forked to the workers rather than once per worker.
+
 ## Configuration
 
 Read once at start-up and validated, so a bad value fails immediately.

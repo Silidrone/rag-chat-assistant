@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 tests/
+web/node_modules/
+web/dist/
+.playwright-mcp/

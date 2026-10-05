@@ -1,0 +1,60 @@
+name: ragchatassistant
+
+# Production stack behind the shared external Traefik proxy on codeise.
+# Traefik terminates TLS and routes by Host header, so nothing here publishes a
+# host port. Only nginx joins the external `traefik` network; the API stays on
+# the private internal one and is reachable only through nginx.
+
+networks:
+  traefik:
+    external: true
+  internal:
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker-prod/api/Dockerfile
+    environment:
+      - LLM_API_BASE=${LLM_API_BASE:-https://api.openai.com/v1}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_EMBED_MODEL=${LLM_EMBED_MODEL:-text-embedding-3-small}
+      - LLM_CHAT_MODEL=${LLM_CHAT_MODEL:-gpt-4o}
+      - LLM_JUDGE_MODEL=${LLM_JUDGE_MODEL:-gpt-4o-mini}
+      - JUDGE_MODE=${JUDGE_MODE:-shadow}
+      - RAG_TOP_K=${RAG_TOP_K:-4}
+      - RAG_MIN_SCORE=${RAG_MIN_SCORE:-0.25}
+    healthcheck:
+      # The index is built at start-up, so "the process is up" is not "it is
+      # ready". /health reports what actually loaded.
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/health').status==200 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: always
+    networks:
+      - internal
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: docker-prod/nginx/Dockerfile
+    restart: always
+    expose:
+      - "80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - traefik
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.ragchat.rule=Host(`8rh5yx2gibyk.kaldify.com`)"
+      - "traefik.http.routers.ragchat.entrypoints=websecure"
+      - "traefik.http.routers.ragchat.tls.certresolver=myhttpchallenge"
+      - "traefik.http.routers.ragchat.service=ragchat"
+      - "traefik.http.services.ragchat.loadbalancer.server.port=80"
