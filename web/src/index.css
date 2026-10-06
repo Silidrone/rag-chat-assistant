@@ -1,12 +1,14 @@
 :root {
-  --bg: #e9edf1;
+  --bg: #eef1f4;
   --surface: #ffffff;
-  --ink: #1b1f24;
-  --muted: #697079;
-  --rule: #ccd4db;
-  --rule-strong: #9aa5af;
-  --grounded: #0f5d46;
-  --bar: #b4bec7;
+  --panel: #e0e6ec;
+  --ink: #171b20;
+  --muted: #5f6872;
+  --rule: #d6dde3;
+  --rule-strong: #9ba6b1;
+  --grounded: #0d5c44;
+  --bar: #bcc5cd;
+  --radius: 7px;
 
   --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
@@ -28,35 +30,39 @@ body {
 
 .shell {
   display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
+  grid-template-columns: 16.5rem minmax(0, 1fr);
   min-height: 100vh;
-  align-items: start;
 }
 
 .page {
-  max-width: 44rem;
-  padding: 3.5rem 1.5rem 6rem;
+  max-width: 47rem;
+  margin: 0 auto;
+  padding: 4.5rem 2rem 7rem;
 }
 
 .wordmark {
   font-family: var(--mono);
-  font-size: 0.9rem;
-  letter-spacing: 0.01em;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .standfirst {
-  max-width: 34rem;
-  margin: 0.6rem 0 0;
+  max-width: 36rem;
+  font-size: 1.02rem;
+  margin: 0.75rem 0 0;
   color: var(--muted);
   text-wrap: pretty;
 }
 
 .config {
   font-family: var(--mono);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--muted);
-  margin-top: 0.4rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--rule);
 }
 
 /* ---- ask ---- */
@@ -64,23 +70,30 @@ body {
 .ask {
   display: flex;
   gap: 0.5rem;
-  margin-top: 2.25rem;
+  margin-top: 2.5rem;
 }
 
 .ask input {
   flex: 1 1 auto;
   min-width: 0;
   font: inherit;
+  font-size: 1rem;
   color: inherit;
-  padding: 0.7rem 0.85rem;
+  padding: 0.85rem 1rem;
   background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.ask input:focus {
+  border-color: var(--grounded);
+  box-shadow: 0 0 0 3px rgba(13, 92, 68, 0.12);
+  outline: none;
 }
 
 .ask input::placeholder { color: #9aa2ab; }
 
-.ask input:focus-visible,
 .ask button:focus-visible,
 .example:focus-visible {
   outline: 2px solid var(--grounded);
@@ -90,32 +103,35 @@ body {
 .ask button {
   font: inherit;
   font-weight: 600;
-  padding: 0.7rem 1.15rem;
+  padding: 0.85rem 1.4rem;
   color: var(--surface);
   background: var(--ink);
   border: 1px solid var(--ink);
-  border-radius: 3px;
+  border-radius: var(--radius);
   cursor: pointer;
+  transition: opacity 120ms ease;
 }
 
-.ask button:disabled { opacity: 0.45; cursor: default; }
+.ask button:disabled { opacity: 0.3; cursor: default; }
+.ask button:not(:disabled):hover { opacity: 0.88; }
 
 .examples {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
 }
 
 .example {
   font: inherit;
   font-size: 0.85rem;
   color: var(--muted);
-  padding: 0.25rem 0.6rem;
-  background: none;
+  padding: 0.35rem 0.75rem;
+  background: var(--surface);
   border: 1px solid var(--rule);
   border-radius: 999px;
   cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
 }
 
 .example:hover { color: var(--ink); border-color: var(--rule-strong); }
@@ -123,8 +139,8 @@ body {
 /* ---- results ---- */
 
 .band {
-  margin-top: 2.5rem;
-  padding-top: 0.7rem;
+  margin-top: 3rem;
+  padding-top: 0.9rem;
   border-top: 1px solid var(--rule);
 }
 
@@ -166,9 +182,9 @@ body {
   font-family: var(--mono);
   font-size: 0.82rem;
   color: var(--grounded);
-  padding: 0.15rem 0.5rem;
+  padding: 0.2rem 0.55rem;
   border: 1px solid var(--grounded);
-  border-radius: 3px;
+  border-radius: 5px;
 }
 
 /* ---- retrieval chart ---- */
@@ -320,12 +336,13 @@ body {
 .sidebar {
   position: sticky;
   top: 0;
-  align-self: start;
-  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   overflow-y: auto;
-  padding: 3.5rem 1rem 2rem 1.5rem;
+  padding: 2rem 1rem 1.5rem 1.5rem;
   border-right: 1px solid var(--rule);
-  background: #e3e8ed;
+  background: var(--panel);
 }
 
 .side-head {
@@ -351,28 +368,34 @@ body {
 
 .tree {
   list-style: none;
-  margin: 0 0 1rem;
+  margin: 0 0 1.1rem;
   padding: 0;
 }
 
 .tree-row {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.3rem 0.4rem;
+  padding: 0.38rem 0.5rem;
   font-family: var(--mono);
   font-size: 0.78rem;
   text-align: left;
   color: var(--ink);
   background: none;
   border: 0;
-  border-radius: 3px;
+  border-left: 2px solid transparent;
+  border-radius: 0 5px 5px 0;
   cursor: pointer;
+  transition: background 120ms ease;
 }
 
-.tree-row:hover { background: #d7dee5; }
-.tree-row.open { background: var(--surface); }
+.tree-row:hover { background: #d8dfe6; }
+
+.tree-row.open {
+  background: var(--surface);
+  border-left-color: var(--grounded);
+}
 .tree-row.cited { color: var(--grounded); }
 .tree-row:focus-visible { outline: 2px solid var(--grounded); outline-offset: -2px; }
 
@@ -403,19 +426,22 @@ body {
 .side-actions button {
   font: inherit;
   font-size: 0.78rem;
-  padding: 0.25rem 0.55rem;
+  padding: 0.35rem 0.7rem;
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
   cursor: pointer;
+  transition: border-color 120ms ease;
 }
 
 .side-actions button:hover { border-color: var(--ink); }
 .side-actions button:focus-visible { outline: 2px solid var(--grounded); outline-offset: 2px; }
 
 .side-note {
-  margin: 0;
+  margin: auto 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
   font-size: 0.76rem;
   line-height: 1.45;
   color: var(--muted);
@@ -439,7 +465,7 @@ body {
   padding: 0.4rem 0.55rem;
   background: var(--surface);
   border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border-radius: var(--radius);
 }
 
 .editor-remove {
@@ -448,8 +474,8 @@ body {
   padding: 0.4rem 0.7rem;
   color: #8a2f20;
   background: none;
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
@@ -466,8 +492,8 @@ body {
   color: var(--ink);
   padding: 0.7rem 0.8rem;
   background: var(--surface);
-  border: 1px solid var(--rule-strong);
-  border-radius: 3px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
 }
 
 .editor-name:focus-visible,
@@ -485,7 +511,7 @@ button.cite {
   padding: 0.15rem 0.5rem;
   background: none;
   border: 1px solid var(--grounded);
-  border-radius: 3px;
+  border-radius: 5px;
   cursor: pointer;
 }
 
@@ -496,10 +522,10 @@ button.cite:focus-visible { outline: 2px solid var(--grounded); outline-offset: 
   .shell { grid-template-columns: 1fr; }
   .sidebar {
     position: static;
-    max-height: none;
+    height: auto;
     padding: 1.75rem 1.5rem;
     border-right: 0;
     border-bottom: 1px solid var(--rule);
   }
-  .page { padding-top: 2rem; }
+  .page { padding: 2.25rem 1.25rem 4rem; }
 }
