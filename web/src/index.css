@@ -1,13 +1,25 @@
 :root {
-  --bg: #eef1f4;
+  /* Light canvas, dark rail. The content side is near-white so the surfaces
+     and the ink do the work, and the rail is a deep slate carrying a trace of
+     the accent hue rather than neutral grey. */
+  --bg: #f6f8f8;
   --surface: #ffffff;
-  --panel: #e0e6ec;
-  --ink: #171b20;
-  --muted: #5f6872;
-  --rule: #d6dde3;
-  --rule-strong: #9ba6b1;
-  --grounded: #0d5c44;
-  --bar: #bcc5cd;
+  --ink: #12171a;
+  --muted: #58646c;
+  --rule: #e1e7e8;
+  --rule-strong: #93a1a6;
+  --bar: #c6d0d3;
+
+  /* One accent, two values: it has to read on paper and on slate. */
+  --grounded: #0b6b4d;
+  --grounded-dark: #46c295;
+
+  --rail: #16211f;
+  --rail-raised: #1e2c29;
+  --rail-ink: #e6edeb;
+  --rail-muted: #8fa29c;
+  --rail-rule: #2a3936;
+
   --radius: 7px;
 
   --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
@@ -88,11 +100,11 @@ body {
 
 .ask input:focus {
   border-color: var(--grounded);
-  box-shadow: 0 0 0 3px rgba(13, 92, 68, 0.12);
+  box-shadow: 0 0 0 3px rgba(11, 107, 77, 0.14);
   outline: none;
 }
 
-.ask input::placeholder { color: #9aa2ab; }
+.ask input::placeholder { color: #98a4a9; }
 
 .ask button:focus-visible,
 .example:focus-visible {
@@ -341,8 +353,9 @@ body {
   height: 100vh;
   overflow-y: auto;
   padding: 2rem 1rem 1.5rem 1.5rem;
-  border-right: 1px solid var(--rule);
-  background: var(--panel);
+  border-right: 1px solid var(--rail);
+  background: var(--rail);
+  color: var(--rail-ink);
 }
 
 .side-head {
@@ -355,7 +368,7 @@ body {
 .side-title {
   font-family: var(--mono);
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--rail-muted);
   margin: 0;
 }
 
@@ -363,7 +376,7 @@ body {
   font-family: var(--mono);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
-  color: var(--grounded);
+  color: var(--grounded-dark);
 }
 
 .tree {
@@ -381,25 +394,25 @@ body {
   font-family: var(--mono);
   font-size: 0.78rem;
   text-align: left;
-  color: var(--ink);
+  color: var(--rail-ink);
   background: none;
   border: 0;
   border-left: 2px solid transparent;
   border-radius: 0 5px 5px 0;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: background 120ms ease, color 120ms ease;
 }
 
-.tree-row:hover { background: #d8dfe6; }
+.tree-row:hover { background: var(--rail-raised); }
 
 .tree-row.open {
-  background: var(--surface);
-  border-left-color: var(--grounded);
+  background: var(--rail-raised);
+  border-left-color: var(--grounded-dark);
 }
-.tree-row.cited { color: var(--grounded); }
-.tree-row:focus-visible { outline: 2px solid var(--grounded); outline-offset: -2px; }
+.tree-row.cited { color: var(--grounded-dark); }
+.tree-row:focus-visible { outline: 2px solid var(--grounded-dark); outline-offset: -2px; }
 
-.tree-icon { width: 0.85rem; height: 0.85rem; flex: none; opacity: 0.6; }
+.tree-icon { width: 0.85rem; height: 0.85rem; flex: none; opacity: 0.45; }
 
 .tree-name {
   overflow: hidden;
@@ -413,7 +426,7 @@ body {
   height: 0.4rem;
   flex: none;
   border-radius: 50%;
-  background: var(--grounded);
+  background: var(--grounded-dark);
 }
 
 .side-actions {
@@ -427,24 +440,24 @@ body {
   font: inherit;
   font-size: 0.78rem;
   padding: 0.35rem 0.7rem;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--rule);
+  color: var(--rail-ink);
+  background: var(--rail-raised);
+  border: 1px solid var(--rail-rule);
   border-radius: 5px;
   cursor: pointer;
-  transition: border-color 120ms ease;
+  transition: border-color 120ms ease, background 120ms ease;
 }
 
-.side-actions button:hover { border-color: var(--ink); }
-.side-actions button:focus-visible { outline: 2px solid var(--grounded); outline-offset: 2px; }
+.side-actions button:hover { border-color: var(--rail-muted); background: #263633; }
+.side-actions button:focus-visible { outline: 2px solid var(--grounded-dark); outline-offset: 2px; }
 
 .side-note {
   margin: auto 0 0;
   padding-top: 1rem;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rail-rule);
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--muted);
+  color: var(--rail-muted);
   text-wrap: pretty;
 }
 
@@ -515,7 +528,7 @@ button.cite {
   cursor: pointer;
 }
 
-button.cite:hover { background: rgba(15, 93, 70, 0.07); }
+button.cite:hover { background: rgba(11, 107, 77, 0.07); }
 button.cite:focus-visible { outline: 2px solid var(--grounded); outline-offset: 2px; }
 
 @media (max-width: 52rem) {
@@ -525,7 +538,7 @@ button.cite:focus-visible { outline: 2px solid var(--grounded); outline-offset: 
     height: auto;
     padding: 1.75rem 1.5rem;
     border-right: 0;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rail-rule);
   }
   .page { padding: 2.25rem 1.25rem 4rem; }
 }
