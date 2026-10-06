@@ -529,3 +529,58 @@ button.cite:focus-visible { outline: 2px solid var(--grounded); outline-offset: 
   }
   .page { padding: 2.25rem 1.25rem 4rem; }
 }
+
+/* ---- editor commit bar ---- */
+
+.editor-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+.editor-save {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  color: var(--surface);
+  background: var(--grounded);
+  border: 1px solid var(--grounded);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.editor-save:disabled {
+  color: var(--muted);
+  background: none;
+  border-color: var(--rule);
+  cursor: default;
+}
+
+.editor-revert {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.editor-revert:hover { color: var(--ink); border-color: var(--rule-strong); }
+
+.editor-save:focus-visible,
+.editor-revert:focus-visible {
+  outline: 2px solid var(--grounded);
+  outline-offset: 2px;
+}
+
+.editor-state {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.editor-state.dirty { color: var(--ink); }

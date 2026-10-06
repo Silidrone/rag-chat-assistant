@@ -73,6 +73,12 @@ export default function App() {
   const [defaults, setDefaults] = useState<Article[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
+  // The editor holds a draft rather than writing straight through. Asking a
+  // question mid-edit used to send half-typed text to the index, and there
+  // was no moment at which a change was committed.
+  const [draftName, setDraftName] = useState("");
+  const [draftText, setDraftText] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
   const [question, setQuestion] = useState("");
   const [result, setResult] = useState<AskResponse | null>(null);
   const [failure, setFailure] = useState<{ message: string; fromServer: boolean } | null>(
@@ -124,7 +130,7 @@ export default function App() {
     setPending(true);
     setFailure(null);
     setResult(null);
-    setEditing(null);
+    openArticle(null);
     try {
       const response = await fetch("/ask", {
         method: "POST",
@@ -149,15 +155,25 @@ export default function App() {
     }
   }
 
-  function updateArticle(source: string, text: string) {
-    setArticles((current) => current.map((a) => (a.source === source ? { ...a, text } : a)));
+  function openArticle(source: string | null) {
+    setEditing(source);
+    setJustSaved(false);
+    const article = source ? articles.find((a) => a.source === source) : null;
+    setDraftName(article?.source ?? "");
+    setDraftText(article?.text ?? "");
   }
 
-  function renameArticle(source: string, next: string) {
-    const name = next.trim();
-    if (!name || articles.some((a) => a.source !== source && a.source === name)) return;
-    setArticles((current) => current.map((a) => (a.source === source ? { ...a, source: name } : a)));
+  function saveDraft() {
+    if (!editing) return;
+    const name = draftName.trim();
+    if (!name || !draftText.trim()) return;
+    if (articles.some((a) => a.source !== editing && a.source === name)) return;
+
+    setArticles((current) =>
+      current.map((a) => (a.source === editing ? { source: name, text: draftText } : a)),
+    );
     setEditing(name);
+    setJustSaved(true);
   }
 
   function addArticle() {
@@ -166,11 +182,14 @@ export default function App() {
     while (articles.some((a) => a.source === name)) name = `new-article-${n++}.md`;
     setArticles((current) => [...current, { source: name, text: "# New article\n\n" }]);
     setEditing(name);
+    setDraftName(name);
+    setDraftText("# New article\n\n");
+    setJustSaved(false);
   }
 
   function removeArticle(source: string) {
     setArticles((current) => current.filter((a) => a.source !== source));
-    setEditing(null);
+    openArticle(null);
   }
 
   function exportArticles() {
@@ -211,13 +230,18 @@ export default function App() {
     }
     if (incoming.length > 0) {
       setArticles(incoming);
-      setEditing(null);
+      openArticle(null);
       setResult(null);
     }
     if (fileInput.current) fileInput.current.value = "";
   }
 
   const open = editing ? articles.find((a) => a.source === editing) : null;
+  const dirty = open !== null && open !== undefined
+    && (draftName !== open.source || draftText !== open.text);
+  const nameTaken =
+    draftName.trim() !== "" &&
+    articles.some((a) => a.source !== editing && a.source === draftName.trim());
   const gatePercent = health ? (health.min_score / AXIS_MAX) * 100 : null;
   const declined = result !== null && result.debug.refused_by !== null;
 
@@ -241,7 +265,7 @@ export default function App() {
                     (editing === article.source ? " open" : "") +
                     (cited ? " cited" : "")
                   }
-                  onClick={() => setEditing(editing === article.source ? null : article.source)}
+                  onClick={() => openArticle(editing === article.source ? null : article.source)}
                 >
                   <svg className="tree-icon" viewBox="0 0 16 16" aria-hidden="true">
                     <path
@@ -276,7 +300,7 @@ export default function App() {
               type="button"
               onClick={() => {
                 setArticles(defaults);
-                setEditing(null);
+                openArticle(null);
                 setResult(null);
               }}
             >
@@ -352,9 +376,12 @@ export default function App() {
             <div className="editor-head">
               <input
                 className="editor-name"
-                value={open.source}
+                value={draftName}
                 aria-label="Article file name"
-                onChange={(event) => renameArticle(open.source, event.target.value)}
+                onChange={(event) => {
+                  setDraftName(event.target.value);
+                  setJustSaved(false);
+                }}
               />
               <button
                 type="button"
@@ -366,14 +393,45 @@ export default function App() {
             </div>
             <textarea
               className="editor-body"
-              value={open.text}
+              value={draftText}
               spellCheck={false}
               aria-label="Article text"
-              onChange={(event) => updateArticle(open.source, event.target.value)}
+              onChange={(event) => {
+                setDraftText(event.target.value);
+                setJustSaved(false);
+              }}
             />
+            <div className="editor-foot">
+              <button
+                type="button"
+                className="editor-save"
+                disabled={!dirty || nameTaken || draftName.trim() === "" || draftText.trim() === ""}
+                onClick={saveDraft}
+              >
+                Save
+              </button>
+              {dirty && (
+                <button
+                  type="button"
+                  className="editor-revert"
+                  onClick={() => openArticle(open.source)}
+                >
+                  Revert
+                </button>
+              )}
+              <span className={dirty ? "editor-state dirty" : "editor-state"}>
+                {nameTaken
+                  ? `Another article is already called ${draftName.trim()}.`
+                  : dirty
+                    ? "Unsaved changes. Questions still use the saved version."
+                    : justSaved
+                      ? "Saved to this browser."
+                      : "Saved. Edits live in this browser only."}
+              </span>
+            </div>
             <p className="note">
-              The first heading is what gets embedded alongside the body, so it carries topic
-              words the body leaves implicit. Changes apply to your next question.
+              The first heading is embedded alongside the body, so it carries topic words the
+              body leaves implicit. Saving re-indexes the article on your next question.
             </p>
           </section>
         )}
@@ -407,7 +465,7 @@ export default function App() {
                       key={source}
                       type="button"
                       className="cite"
-                      onClick={() => setEditing(source)}
+                      onClick={() => openArticle(source)}
                     >
                       {source}
                     </button>
