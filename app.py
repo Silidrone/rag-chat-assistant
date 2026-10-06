@@ -22,6 +22,7 @@ from rag.judge import Judge
 from rag.config import ConfigurationError, Settings, load_settings
 from rag.index import VectorIndex, build_index
 from rag.prompts import JUDGE_SYSTEM_PROMPT, build_judge_prompt
+from rag.workspace import WorkspaceError, cache_size, index_for, validate
 from rag.models import (
     GROUNDED_ANSWER_SCHEMA,
     SUPPORT_VERDICT_SCHEMA,
@@ -64,7 +65,7 @@ def create_app(
     # Indexed once at start-up: the knowledge base is static, so paying the
     # embedding cost per request would buy nothing.
     if index is None:
-        index = build_index(load_documents(), embedder)
+        index = index_for(load_documents(), embedder)
 
     app = Flask(__name__)
 
@@ -80,26 +81,42 @@ def create_app(
                 "top_k": settings.top_k,
                 "min_score": settings.min_score,
                 "judge_mode": settings.judge_mode,
+                "cached_vectors": cache_size(),
             }
         )
 
     @app.get("/articles")
     def articles():
-        """The knowledge base, exactly as the retriever holds it.
+        """The knowledge base, rebuilt from the index as editable markdown.
 
-        Served from the index rather than re-read from disk, so what a reader
-        checks an answer against is the same text that was embedded and
-        retrieved, chunk boundaries and all.
+        Derived from the index rather than re-read from disk, so what a reader
+        checks an answer against is the text that was actually embedded. The
+        heading is put back on the front because this is what the editor loads
+        and posts back: serving the bare chunk body would quietly strip every
+        heading on the first round trip, and the heading is embedded with the
+        body precisely because it carries topic words the body omits.
         """
+        order: list[str] = []
+        headings: dict[str, str] = {}
+        bodies: dict[str, list[str]] = {}
+        for chunk in index.chunks:
+            if chunk.source not in bodies:
+                order.append(chunk.source)
+                headings[chunk.source] = chunk.heading
+                bodies[chunk.source] = []
+            bodies[chunk.source].append(chunk.text)
+
         return jsonify(
             [
                 {
-                    "id": chunk.id,
-                    "source": chunk.source,
-                    "heading": chunk.heading,
-                    "text": chunk.text,
+                    "source": source,
+                    "heading": headings[source],
+                    "text": (
+                        f"# {headings[source]}\n\n" if headings[source] else ""
+                    )
+                    + "\n\n".join(bodies[source]),
                 }
-                for chunk in index.chunks
+                for source in order
             ]
         )
 
@@ -110,10 +127,22 @@ def create_app(
         if not question:
             return jsonify({"error": 'send JSON like {"question": "..."}'}), 400
 
+        # A caller may bring its own knowledge base. Embedding is cached per
+        # chunk, so an edited article costs one call and an unchanged one
+        # costs nothing. Without `articles` the shipped set is used.
+        ask_index = index
+        if payload.get("articles") is not None:
+            if embedder is None:
+                return jsonify({"error": "this instance cannot index new articles"}), 400
+            try:
+                ask_index = index_for(validate(payload["articles"]), embedder)
+            except WorkspaceError as error:
+                return jsonify({"error": str(error)}), 400
+
         try:
             result = answer_question(
                 question,
-                index=index,
+                index=ask_index,
                 embedder=embedder,
                 generator=generator,
                 settings=settings,

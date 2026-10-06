@@ -42,11 +42,21 @@ Either way `.env` is picked up, and real environment variables override it.
 
 `debug` carries the retrieval trace, plus the model's own wording when it declines.
 
-`GET /articles` returns the knowledge base as the retriever holds it, chunk boundaries and
-all. The UI lists it under every answer and opens the cited article, so a reader can check
-the answer against its source instead of taking the citation on trust. It is also what makes
-a refusal legible: without seeing the articles you cannot tell a correct decline from a
-broken one.
+`GET /articles` returns the knowledge base as editable markdown, rebuilt from the index so
+what you read is what was embedded. The UI shows it as a file tree you can browse, edit,
+import and export.
+
+`POST /ask` optionally takes an `articles` array, and answers against that instead of the
+shipped set. That is what makes the knowledge base editable on a public URL without the
+service holding state one visitor can change for another: your edits live in your browser
+and travel with your question.
+
+Embedding is cached per chunk, keyed by the exact text embedded, so editing one article
+costs one embedding call and leaving the rest alone costs nothing. The shipped set is
+embedded once at start-up. A supplied knowledge base is capped at 24 articles, 8k characters
+each and 60k total, because every distinct chunk is a paid call on a public endpoint, and a
+bad one is rejected rather than repaired: silently truncating it would produce answers that
+look grounded against text the caller never sent.
 
 ## Four guardrails
 

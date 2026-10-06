@@ -26,9 +26,13 @@ def client_for(index, embedder, settings):
 class TestHealth:
     def test_reports_what_was_loaded(self, client_for):
         response = client_for(ScriptedGenerator()).get("/health")
+        body = response.get_json()
 
         assert response.status_code == 200
-        assert response.get_json() == {
+        # cached_vectors is process-wide and depends on what ran before, so it
+        # is asserted as present rather than pinned to a number.
+        assert isinstance(body.pop("cached_vectors"), int)
+        assert body == {
             "ok": True,
             "documents_loaded": 3,
             "chunks_indexed": 3,
@@ -49,16 +53,26 @@ class TestArticles:
             "billing.md",
             "seats_and_roles.md",
         ]
-        assert body[0]["id"] == "c0"
         assert "30 days" in body[0]["text"]
         assert body[0]["heading"] == "Cancellation and Refunds"
 
-    def test_what_is_served_is_what_is_retrievable(self, client_for, index):
-        """A reader checking an answer must see the text that was embedded."""
+    def test_served_markdown_round_trips_through_the_editor(self, client_for, index):
+        """What the editor loads must re-chunk to the same thing it replaced.
+
+        Serving the bare chunk body would strip the heading on the first save,
+        and the heading is embedded with the body on purpose.
+        """
+        from rag.index import chunk_document
+
         body = client_for(ScriptedGenerator()).get("/articles").get_json()
 
-        assert len(body) == len(index.chunks)
-        assert {a["id"] for a in body} == {c.id for c in index.chunks}
+        assert len(body) == len({c.source for c in index.chunks})
+        for article in body:
+            assert article["text"].startswith(f"# {article['heading']}")
+            rechunked = chunk_document(article["source"], article["text"])
+            original = [c for c in index.chunks if c.source == article["source"]]
+            assert [c.heading for c in rechunked] == [c.heading for c in original]
+            assert [c.text for c in rechunked] == [c.text for c in original]
 
 
 class TestAskContract:
@@ -121,3 +135,70 @@ class TestUpstreamFailure:
 
         assert response.status_code == 503
         assert "language model unavailable" in response.get_json()["error"]
+
+
+class TestCallerSuppliedArticles:
+    """A caller can bring its own knowledge base, so the demo can be edited
+    without the service holding state one visitor can change for another."""
+
+    def test_answers_against_the_supplied_articles(self, client_for):
+        generator = ScriptedGenerator(answered("Badgers are nocturnal.", ["c0"]))
+
+        response = client_for(generator).post(
+            "/ask",
+            json={
+                "question": "badgers nocturnal habits",
+                "articles": [
+                    {"source": "badgers.md", "text": "# Badgers\n\nBadgers are nocturnal."}
+                ],
+            },
+        )
+        body = response.get_json()
+
+        assert response.status_code == 200
+        assert body["sources"] == ["badgers.md"]
+        # The shipped fixture articles are not in play at all.
+        assert all(h["source"] == "badgers.md" for h in body["debug"]["retrieved"])
+
+    def test_omitting_articles_uses_the_shipped_set(self, client_for):
+        generator = ScriptedGenerator(answered("30 days.", ["c0"]))
+
+        body = client_for(generator).post(
+            "/ask", json={"question": "refunds cancelled within 30 days"}
+        ).get_json()
+
+        assert body["sources"] == ["cancellation.md"]
+
+    @pytest.mark.parametrize(
+        "articles,expected",
+        [
+            ([], "non-empty list"),
+            ("nope", "non-empty list"),
+            ([{"source": "a.md", "text": ""}], "is empty"),
+            ([{"source": "", "text": "x"}], "no source name"),
+            ([{"source": "a/b.md", "text": "x"}], "path separator"),
+            ([{"source": "a.md", "text": "x"}, {"source": "A.MD", "text": "y"}], "duplicate"),
+        ],
+    )
+    def test_a_bad_knowledge_base_is_refused_not_repaired(
+        self, client_for, articles, expected
+    ):
+        response = client_for(ScriptedGenerator()).post(
+            "/ask", json={"question": "anything", "articles": articles}
+        )
+
+        assert response.status_code == 400
+        assert expected in response.get_json()["error"]
+
+    def test_oversized_knowledge_base_is_refused(self, client_for):
+        """Every distinct chunk is a paid embedding call on a public endpoint."""
+        response = client_for(ScriptedGenerator()).post(
+            "/ask",
+            json={
+                "question": "anything",
+                "articles": [{"source": "big.md", "text": "x" * 9_000}],
+            },
+        )
+
+        assert response.status_code == 400
+        assert "limit is" in response.get_json()["error"]
